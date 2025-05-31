@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import "../output.css";
+import "react-big-calendar/lib/css/react-big-calendar.css"; // 1. Import first
+import "../output.css"; // Your Tailwind CSS (import AFTER calendar css)
 
-import Navbar from "../components/Navbar";
+import { Button } from "../components/ui/button";
 import { Toaster } from "react-hot-toast";
 
 const localizer = momentLocalizer(moment);
@@ -16,11 +16,27 @@ export default function Home() {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const [calendarView, setCalendarView] = useState("month");
 
   useEffect(() => {
     fetchEvents(currentDate);
   }, [selectedSubject, currentDate]);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const fetchEvents = async (date) => {
     setLoading(true);
@@ -60,34 +76,63 @@ export default function Home() {
     return "bg-red-400";
   };
 
-  const handleAddTaskClick = () => {
-    // TODO: Implement what happens when "Add Task" clicked
-    alert("Add Task clicked");
-  };
-
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar
-        selectedSubject={selectedSubject}
-        setSelectedSubject={setSelectedSubject}
-        subjects={subjects}
-        onAddTaskClick={handleAddTaskClick}
-      />
+      <nav className="flex items-center justify-between bg-red-500 text-white px-6 py-4 shadow">
+        <h1 className="text-2xl font-bold">Study Planner</h1>
+        <div className="relative space-x-4 flex items-center">
+          <Button className="bg-white text-red-500 hover:bg-red-100">Dashboard</Button>
+
+          <div className="relative dropdown-container" ref={dropdownRef}>
+            <Button
+              className="bg-white text-red-500 hover:bg-red-100"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              {selectedSubject || "All Subjects"} ▼
+            </Button>
+            {dropdownOpen && (
+              <div className="absolute z-10 mt-2 bg-white text-black rounded shadow-md py-1 w-40">
+                <div
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    setSelectedSubject("");
+                    setDropdownOpen(false);
+                  }}
+                >
+                  All Subjects
+                </div>
+                {subjects.map((subject, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => {
+                      setSelectedSubject(subject);
+                      setDropdownOpen(false);
+                    }}
+                  >
+                    {subject}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Button className="bg-white text-red-500 hover:bg-red-100">Add Task</Button>
+        </div>
+      </nav>
 
       <main className="p-4 max-w-6xl mx-auto w-full">
         {error ? (
           <div className="text-center text-red-500">
             <p>No tasks found.</p>
-            <button
-              onClick={() => fetchEvents(currentDate)}
-              className="mt-2 px-4 py-2 bg-red-500 text-white rounded"
-            >
+            <Button onClick={() => fetchEvents(currentDate)} className="mt-2">
               Retry
-            </button>
+            </Button>
           </div>
         ) : (
           <div
             style={{ height: "80vh", width: "100%" }}
+            // 3. Make sure calendar container has minWidth for day/week
             className="min-w-[700px]"
           >
             <Calendar
@@ -105,17 +150,30 @@ export default function Home() {
               style={{ height: "100%", width: "100%" }}
               className="bg-white p-4 rounded shadow transition-opacity duration-200"
               components={{
-                event: ({ event }) => (
-                  <div
-                    className={`text-white px-2 py-1 rounded ${getColor(event.progress)}`}
-                    title={`Progress: ${event.progress}%`}
-                    aria-label={`Event: ${event.title}, Progress: ${event.progress}%`}
-                    tabIndex="0"
-                  >
-                    {event.title}
-                  </div>
-                ),
-              }}
+  event: ({ event }) => {
+    const [subject, ...rest] = event.title.split(" - ");
+    const restText = rest.join(" - ");
+
+    return (
+      <div
+        className={`px-1 py-0.5 text-xs rounded ${getColor(event.progress)}`}
+        style={{
+          lineHeight: "1.1",
+          fontSize: "0.7rem",
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+          minHeight: "1.5em", // helps force a bit of space
+        }}
+        title={event.title}
+      >
+        <span className="font-semibold text-white">{subject}</span>
+        {restText && <span className="text-white"> - {restText}</span>}
+      </div>
+    );
+  },
+}}
+
             />
           </div>
         )}

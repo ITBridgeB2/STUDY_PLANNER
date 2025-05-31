@@ -5,6 +5,15 @@ import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+function formatDateToLocalYYYYMMDD(dateString) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function EditTask() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,11 +30,16 @@ export default function EditTask() {
 
   useEffect(() => {
     axios.get(`http://localhost:5000/api/tasks/${id}`)
-      .then((res) => setTask(res.data))
-      .catch((err) => toast.error("Failed to load task data."));
+      .then((res) => {
+        const data = res.data;
+        setTask({
+          ...data,
+          task_date: data.task_date ? formatDateToLocalYYYYMMDD(data.task_date) : ""
+        });
+      })
+      .catch(() => toast.error("Failed to load task data."));
   }, [id]);
 
-  // Escape key to close modal (simulate exit)
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
@@ -36,7 +50,6 @@ export default function EditTask() {
     return () => document.removeEventListener("keydown", handleEsc);
   }, [navigate]);
 
-  // Focus trap
   useEffect(() => {
     const focusableElements = modalRef.current?.querySelectorAll("input, textarea, button");
     const first = focusableElements?.[0];
@@ -66,7 +79,6 @@ export default function EditTask() {
     const { name, value } = e.target;
     setTask({ ...task, [name]: value });
 
-    // Real-time validation
     const updatedErrors = { ...errors };
     if (name === "subject" && value.trim() === "") {
       updatedErrors.subject = "Subject is required.";
@@ -92,9 +104,11 @@ export default function EditTask() {
       return;
     }
 
+    // Send the date as YYYY-MM-DD (already formatted)
     const formattedTask = {
       ...task,
-      task_date: task.task_date?.split("T")[0],
+      // Just ensure it's a string and correct format
+      task_date: task.task_date,
     };
 
     axios.put(`http://localhost:5000/api/tasks/${id}`, formattedTask)
@@ -156,7 +170,7 @@ export default function EditTask() {
               aria-label="Task Date"
               type="date"
               name="task_date"
-              value={task.task_date?.split("T")[0]}
+              value={task.task_date || ""}
               onChange={handleChange}
               className="w-full border px-3 py-2 rounded"
               required
@@ -186,12 +200,21 @@ export default function EditTask() {
               max="100"
             />
           </div>
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-          >
-            Update Task
-          </button>
+          <div className="flex gap-4 mt-4">
+            <button
+              type="submit"
+              className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+            >
+              Update
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex-1 bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
         </form>
         <ToastContainer />
       </div>
