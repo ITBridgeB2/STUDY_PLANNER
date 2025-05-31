@@ -46,6 +46,46 @@ app.get('/api/tasks', (req, res) => {
 });
 
 
+// GET a single task by ID
+app.get('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const sql = `SELECT * FROM study_tasks WHERE id = ?`;
+  db.query(sql, [id], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (results.length === 0) return res.status(404).json({ error: 'Task not found' });
+    res.json(results[0]);
+  });
+});
+
+
+
+// PUT to update a task
+app.put('/api/tasks/:id', (req, res) => {
+  const { id } = req.params;
+  const { subject, duration, task_date, notes, confidence_level } = req.body;
+
+  // Add logs to inspect incoming values
+  console.log("Updating Task ID:", id);
+  console.log("Received:", { subject, duration, task_date, notes, confidence_level });
+
+  const sql = `
+    UPDATE study_tasks
+    SET subject = ?, duration = ?, task_date = ?, notes = ?, confidence_level = ?
+    WHERE id = ?
+  `;
+  
+  db.query(sql, [subject, duration, task_date, notes, confidence_level, id], (err) => {
+    if (err) {
+      console.error("MySQL Error:", err);  // Show full MySQL error
+      return res.status(500).json({ error: 'Database error', details: err.message });
+    }
+    res.json({ message: 'Task updated successfully' });
+  });
+});
+
+
+
+
 
 
 
