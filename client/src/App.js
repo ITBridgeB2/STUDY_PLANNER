@@ -1,10 +1,15 @@
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import AddTask from "./components/AddTask";
 
 function App() {
   return (
-    <div className="App">
-      <h1>hello</h1>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<AddTask/>} />
+        {/* Remove direct route for modal */}
+      </Routes>
+    </Router>
   );
 }
 
