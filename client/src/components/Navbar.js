@@ -27,7 +27,13 @@ export default function Navbar({
 
   return (
     <nav className="flex items-center justify-between bg-red-500 text-white px-6 py-4 shadow">
-      <h1 className="text-2xl font-bold">Study Planner</h1>
+      <h1 style={{ textTransform: 'uppercase', color: 'red', fontWeight: 'bold' }}>
+  Study Planner
+</h1>
+
+
+
+
       <div className="relative space-x-4 flex items-center">
         <Button className="bg-white text-red-500 hover:bg-red-100">Dashboard</Button>
 
