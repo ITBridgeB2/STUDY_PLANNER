@@ -18,7 +18,10 @@ output.css is usually not committed to GitHub at all. Instead, it should be gene
 That’s why most projects add output.css to .gitignore.
 
 
------in order to get a clean ui , use below, output.css
+-----in order to get a clean ui , use below, output.css-----------------
+
+
+
 *, ::before, ::after {
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
